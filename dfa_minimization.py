@@ -18,15 +18,15 @@ def create_dfa_graph(states, acceptance_states, transitions, start_state):
         node.set_shape("circle")
 
         if start_state == state:
-            node.set_name("Start")
+            # node.set_name("Start")
             node.set_shape("circle")
             node.set_style("filled")
-        else:
-            node.set_name(str(num))
+        # else:
+        #     node.set_name(str(num))
 
         for final_state in acceptance_states:
             if final_state == state:
-                node.set_name(str(num))
+                # node.set_name(str(num))
                 node.set_shape("doublecircle")
 
         node.set_fontsize(12)  # Establece el tamaño de fuente
@@ -39,10 +39,19 @@ def create_dfa_graph(states, acceptance_states, transitions, start_state):
     # Agrega transiciones como arcos
     for (source, symbol, target) in transitions:
         edge = pydotplus.Edge(
-            state_nodes[str(source)], state_nodes[str(target)], label=symbol)
+            state_nodes[source], state_nodes[target], label=symbol)
         dot.add_edge(edge)
 
     return dot
+
+def write_info_to_file(states, inicial, final, transiciones, file_path):
+
+    with open(file_path, 'w') as file:
+        file.write("Inicial = " + str(inicial) + "\n")
+        file.write("Aceptacion = " + str(final) + "\n")
+        file.write("Estados = " + str(states) + "\n")
+        file.write("Transicion = " + str(transiciones) + "\n")
+
 
 def exec(estados, alfabeto, transiciones, estado_inicial, estados_aceptacion, link):
 
@@ -115,12 +124,34 @@ def exec(estados, alfabeto, transiciones, estado_inicial, estados_aceptacion, li
     new_alfabeto = list(int(symbol) for symbol in alfabeto)
     transit = [(str(tran[0]), int(tran[1]), str(tran[2])) for tran in new_transitions]
 
+
+    dictionary = {}
+
+    i = 40
+    for state in new_states:
+        dictionary[state] = i
+        i += 1
+
+    new_states_changed = list(dictionary[state] for state in new_states)
+    
+    inicial = list(dictionary[iniciale] for iniciale in new_estado_inicial)
+    final = list(dictionary[finale] for finale in new_estados_aceptacion)
+
+    transitions = []
+
+    for tran in transit:
+        tran = (dictionary[tran[0]], tran[1], dictionary[tran[2]])
+        transitions.append(tran)
+
+    # Write information to a text file
+    # write_info_to_file(new_states_changed, inicial, final, transitions, "texts/minimized_dfa_info.txt")
+
     pydotplus.find_graphviz()
 
     # Crear el grafo del DFA minimizado
-    graph = create_dfa_graph(new_states, new_estados_aceptacion, transit, new_estado_inicial)
+    graph = create_dfa_graph(new_states_changed, final, transitions, inicial)
 
     # Guardar o mostrar el gráfico
     graph.write_png(link)  # Guardar archivo PNG
 
-    return new_states, new_alfabeto, transit, new_estado_inicial[0], new_estados_aceptacion
+    return new_states_changed, new_alfabeto, transitions, inicial[0], final

@@ -1,3 +1,5 @@
+import pydotplus
+
 class Node:
     def __init__(self, value, id):
         self.value = value
@@ -13,7 +15,37 @@ class Node:
 
     def id_return(self):
         return self.id
-    
+
+def tree_graph(stack):
+
+    # Create a DOT format representation of the DFA
+    dot = pydotplus.Dot()
+    dot.set_rankdir("TB")  # Use 'TB' for top to bottom layout
+    dot.set_prog("neato")
+
+    # Create nodes for each state
+    state_nodes = {}
+    num = 0
+    for nodo in stack:
+        node = pydotplus.Node(num)
+        node.set_label(nodo.value)  # Set the label
+        node.set_fontsize(12)  # Set font size
+        node.set_width(0.6)  # Set the desired width
+        node.set_height(0.6)  # Set the desired height
+        state_nodes[nodo.id] = node
+        dot.add_node(node)
+
+        num += 1
+
+    # Add transitions as edges
+    for nodo in stack:
+        if nodo.padre != None:
+            edge = pydotplus.Edge(state_nodes[nodo.padre], state_nodes[nodo.id])
+            dot.add_edge(edge)
+
+    return dot
+
+
 def search_node(stack, id):
     for i in range(len(stack)):
         item = stack[i]
@@ -37,7 +69,7 @@ def siguiente_pos(stack, node_list, pos, primerapos):
     return stack, node_list
 
 def or_operation(stack, temp_stack, contador_simbolos, left_node, right_node):
-    or_node = Node(124, contador_simbolos)
+    or_node = Node('|', contador_simbolos)
     left_node.padre = or_node.id
     or_node.left = left_node.id
     stack.append(left_node)
@@ -49,7 +81,7 @@ def or_operation(stack, temp_stack, contador_simbolos, left_node, right_node):
     return stack, temp_stack, contador_simbolos
 
 def kleene_operation(stack, temp_stack, contador_simbolos, left_node):
-    kleene_node = Node(42, contador_simbolos)
+    kleene_node = Node('*', contador_simbolos)
     left_node.padre = kleene_node.id
     kleene_node.left = left_node.id
     kleene_node.nullable = True
@@ -59,7 +91,7 @@ def kleene_operation(stack, temp_stack, contador_simbolos, left_node):
     return stack, temp_stack, contador_simbolos
 
 def concat_operation(stack, temp_stack, contador_simbolos, left_node, right_node):
-    concat_node = Node(46, contador_simbolos)
+    concat_node = Node('.', contador_simbolos)
     left_node.padre = concat_node.id
     concat_node.left = left_node.id
     stack.append(left_node)
@@ -68,14 +100,14 @@ def concat_operation(stack, temp_stack, contador_simbolos, left_node, right_node
     stack.append(right_node)
     temp_stack.append(concat_node)
     contador_simbolos += 1
-    return stack, temp_stack, contador_simbolos    
+    return stack, temp_stack, contador_simbolos
 
 def operando_operation(temp_stack, alfabeto, simbolo, contador_simbolos, contador_leafs):
-    if simbolo not in alfabeto and simbolo != 120500 and simbolo != 35:
+    if simbolo not in alfabeto and simbolo != '𝜀' and simbolo != '#':
         alfabeto.append(simbolo)
 
     leaf_node = Node(simbolo, contador_simbolos)
-    if simbolo == 120500:
+    if simbolo == '𝜀':
         leaf_node.nullable = True
     leaf_node.number = contador_leafs
     leaf_node.primerapos.add(contador_leafs)
@@ -85,9 +117,20 @@ def operando_operation(temp_stack, alfabeto, simbolo, contador_simbolos, contado
     contador_leafs += 1
     return temp_stack, alfabeto, contador_simbolos, contador_leafs
 
+def range_operation(temp_stack, alfabeto, contador_leafs, contador_simbolos, left_node, right_node):
+    range_node = Node('-', contador_simbolos)
+    left_node.padre = range_node.id
+    range_node.left = left_node.id
+    right_node.padre = range_node.id
+    contador_simbolos -= 1
+    i = left_node.value + 1
+    for i in range(left_node.value, right_node.value):
+        operando_operation(temp_stack, alfabeto, i, contador_simbolos, contador_leafs)
+
+
 def exec(postfix):
-    postfix.append(35)
-    postfix.append(46)
+    postfix.append('#')
+    postfix.append('.')
     stack = []
     temp_stack = []
     alfabeto = []
@@ -98,103 +141,115 @@ def exec(postfix):
 
     while contador < len(postfix):
         simbolo = postfix[contador]
-        if simbolo == 124:
+        if simbolo == '|':
             right_node = temp_stack.pop()
             left_node = temp_stack.pop()
             stack, temp_stack, contador_simbolos = or_operation(stack, temp_stack, contador_simbolos, left_node, right_node)
 
-        elif simbolo == 46:
+        elif simbolo == '.':
             right_node = temp_stack.pop()
             left_node = temp_stack.pop()
             stack, temp_stack, contador_simbolos = concat_operation(stack, temp_stack, contador_simbolos, left_node, right_node)
 
-        elif simbolo == 42:
+        elif simbolo == '*':
             left_node = temp_stack.pop()
             stack, temp_stack, contador_simbolos = kleene_operation(stack, temp_stack, contador_simbolos, left_node)
-        
-        elif simbolo == 43:
+
+        elif simbolo == '+':
             left_node = temp_stack.pop()
             temp_stack, alfabeto, contador_simbolos, contador_leafs = operando_operation(temp_stack, alfabeto, left_node.value, contador_simbolos, contador_leafs)
             stack, temp_stack, contador_simbolos = kleene_operation(stack, temp_stack, contador_simbolos, temp_stack.pop())
             right_node = temp_stack.pop()
             stack, temp_stack, contador_simbolos = concat_operation(stack, temp_stack, contador_simbolos, left_node, right_node)
 
-        elif simbolo == 63:
+        elif simbolo == '?':
             left_node = temp_stack.pop()
-            temp_stack, alfabeto, contador_simbolos, contador_leafs = operando_operation(temp_stack, alfabeto, 120500, contador_simbolos, contador_leafs)
+            temp_stack, alfabeto, contador_simbolos, contador_leafs = operando_operation(temp_stack, alfabeto, '𝜀', contador_simbolos, contador_leafs)
             right_node = temp_stack.pop()
             stack, temp_stack, contador_simbolos = or_operation(stack, temp_stack, contador_simbolos, left_node, right_node)
+
+        elif simbolo == '-':
+            right_node = temp_stack.pop()
+            left_node = temp_stack.pop()
 
         else:
             temp_stack, alfabeto, contador_simbolos, contador_leafs = operando_operation(temp_stack, alfabeto, simbolo, contador_simbolos, contador_leafs)
 
         contador += 1
-    
+
     if len(temp_stack) > 0:
         stack.append(temp_stack.pop())
 
     for i in range(len(stack)):
         item = stack[i]
         if item.left != None and item.right != None:
-            if item.value == 124:
+            if item.value == '|':
                 item.nullable = search_node(stack, item.left).nullable or search_node(stack, item.right).nullable
                 stack[i] = item
-            elif item.value == 46:
+            elif item.value == '.':
                 item.nullable = search_node(stack, item.left).nullable and search_node(stack, item.right).nullable
-                stack[i] = item 
-    
+                stack[i] = item
+
     for i in range(len(stack)):
         item = stack[i]
         if item.left != None and item.right != None:
             item_left = search_node(stack, item.left)
             item_right = search_node(stack, item.right)
-            if item.value == 124:
+            if item.value == '|':
                 item.primerapos = item_left.primerapos.union(item_right.primerapos)
                 stack[i] = item
-            elif item.value == 46:
+            elif item.value == '.':
                 if item_left.nullable:
                     item.primerapos = item_left.primerapos.union(item_right.primerapos)
                 else:
                     item.primerapos = item_left.primerapos
                 stack[i] = item
-        elif item.value == 42:
+        elif item.value == '*':
             item.primerapos = search_node(stack, item.left).primerapos
             stack[i] = item
-                
+
     for i in range(len(stack)):
         item = stack[i]
         if item.left != None and item.right != None:
             item_left = search_node(stack, item.left)
             item_right = search_node(stack, item.right)
-            if item.value == 124:
+            if item.value == '|':
                 item.ultimapos = item_left.ultimapos.union(item_right.ultimapos)
                 stack[i] = item
-            elif item.value == 46:
+            elif item.value == '.':
                 if item_right.nullable:
                     item.ultimapos = item_left.ultimapos.union(item_right.ultimapos)
                 else:
                     item.ultimapos = item_right.ultimapos
                 stack[i] = item
-        elif item.value == 42:
+        elif item.value == '*':
             item.ultimapos = search_node(stack, item.left).ultimapos
-            stack[i] = item        
+            stack[i] = item
 
     node_list = {}
 
     for i in range(len(stack)):
         item = stack[i]
-        if item.value == 46:
+        if item.value == '.':
             item_left = search_node(stack, item.left)
             item_right = search_node(stack, item.right)
             for pos in item_left.ultimapos:
-                stack, node_list = siguiente_pos(stack, node_list, pos, item_right.primerapos)        
-        elif item.value == 42:
+                stack, node_list = siguiente_pos(stack, node_list, pos, item_right.primerapos)
+        elif item.value == '*':
             for pos in item.ultimapos:
                 stack, node_list = siguiente_pos(stack, node_list, pos, item.primerapos)
 
     for i in range(len(stack)):
         node = stack[i]
-        if node.value == 35:
+        if node.value == '#':
             node_list[node.number] = [node.value, node.siguientepos]
+
+    pydotplus.find_graphviz()
+
+    graph = tree_graph(stack);
+
+    # Save or display the graph
+    png_file_path = "pngs/tree_graph.png"
+    graph.write_png(png_file_path)  # Save PNG file
 
     return stack, node_list, alfabeto

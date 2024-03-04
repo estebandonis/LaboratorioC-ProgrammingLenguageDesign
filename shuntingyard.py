@@ -1,26 +1,30 @@
 def getPrecedence(ope):
-    precedencia = {40: 1, 124: 2, 46: 3, 43: 4, 63: 4, 42: 4}
+    precedencia = {'(': 1, '|': 2, '-': 2, '.': 3, '+': 4, '?': 4, '!': 4, '*': 4} # 40 = '(', 124 = '|', 45 = '-', 46 = '.', 43 = '+', 63 = '?', 42 = '*'
     if ope not in precedencia:
         return 5
     return precedencia[ope]
 
 def formatear_regex(regex):
-    all_operators = [124, 43, 63, 42]
-    binary_operators = [124]
+    all_operators = ['|', '-', '+', '?', '!', '*']
+    binary_operators = ['|', '-']
     res = []
 
     for i in range(len(regex)):
         c1 = regex[i]
 
         if i + 1 < len(regex):
+            
             c2 = regex[i + 1]
 
             res.append(c1)
 
-            if c1 != 40 and c2 != 41 and c2 not in all_operators and c1 not in binary_operators:
-                res.append(46)
+            if c1 != '(' and c2 != ')' and c2 not in all_operators and c1 not in binary_operators:
+                res.append('.')
     
     res.append(regex[-1])
+
+    print("res: ", res)
+
     return res
 
 def infix_to_postfix(regex):
@@ -29,13 +33,21 @@ def infix_to_postfix(regex):
     regexp = formatear_regex(regex)
     print("formatear_regex: ", regexp)
 
-    for c in regexp:
-        if c == 40:
+    i = 0
+    print("len(regexp): ", len(regexp))
+    while i < len(regexp):
+        c = regexp[i]
+        if c == '(':
             stack.append(c)
-        elif c == 41:
-            while stack[-1] != 40:
+        elif c == ')':
+            while stack[-1] != '(':
                 postfix.append(stack.pop())
             stack.pop()
+        elif c == '\\':
+            postfix.append(c)
+            postfix.append(regexp[i + 1])
+            i += 2
+            continue
         else:
             while len(stack) > 0:
                 peekedChar = stack[-1]
@@ -48,9 +60,12 @@ def infix_to_postfix(regex):
                     break
 
             stack.append(c)
+        i += 1
 
     while len(stack) > 0:
         postfix.append(stack.pop())
+    
+    print("postfix: ", postfix)
     return postfix
 
 def exec(expression):

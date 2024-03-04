@@ -63,7 +63,7 @@ def set_estados(primer, elements, node_list, Dtran, Destados):
     for element in list_elements:
         new_state = new_state.union(node_list[element][1])
         elements.remove(element)
-    
+
     if new_state != set():
         flag = False
         for estado in Destados:
@@ -74,21 +74,21 @@ def set_estados(primer, elements, node_list, Dtran, Destados):
         if flag == False:
             Destados.append([new_state, False])
 
-    if element1[0] != 35 and element1[0] != 120500:
+    if element1[0] != '#' and element1[0] != '𝜀':
         Dtran.append((primer, element1[0], new_state))
 
     return elements, node_list, Dtran, Destados
 
 
 def exec(stack_arbol, node_list, alfabeto):
-    
+
     Destados = []
     Dtran = []
 
     Destados.append([stack_arbol[len(stack_arbol) - 1].primerapos, False])
 
     flag = False
-    while flag == False: 
+    while flag == False:
         for estado in Destados:
             if estado[1] == False:
                 estado_actual = estado[0]
