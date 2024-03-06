@@ -39,6 +39,198 @@ def ASCIITransformer(infix_regex):
     }
     """
 
+    def handle_slash (infix_regex, i, new_infix):
+        next = infix_regex[i+1]
+        if next == '\\' or next in operadores or next == '-' or next == '^':
+            new_infix.append(ord(next))
+            i += 2
+        elif next == 'n':
+            new_infix.append(ord('\n'))
+            i += 2
+        elif next == 't':
+            new_infix.append(ord('\t'))
+            i += 2
+        else:
+            new_infix.append(ord(char))
+            i += 1
+
+        return infix_regex, i, new_infix
+    
+
+    def handle_comilla (infix_regex, i, new_infix):
+        if i + 1 < len(infix_regex):
+            next = infix_regex[i + 1]
+            if next == '\'':
+                new_infix.append('|')
+                i += 1
+            elif i + 2 < len(infix_regex):
+                next_next = infix_regex[i + 2]
+                if next != '-' and next_next == '\'':
+                    new_infix.append(ord(next))
+                    i += 2
+                elif next == '-' and next_next == '\'' and infix_regex[i - 1] == '\'':
+                    new_infix.append(ord(next))
+                    i += 2
+                else:
+                    i += 1
+            else:
+                i += 1
+
+        else:
+            i += 1
+
+        return infix_regex, i, new_infix
+    
+    def handle_double_comilla (infix_regex, i, new_infix):
+        temp_regex = []
+        j = i + 1
+
+        while j < len(infix_regex) and infix_regex[j] != '\"':
+            temp_regex.append(infix_regex[j])
+            j += 1
+
+        h = 0
+        while h < len(temp_regex):
+            
+            if temp_regex[h] == '\\':
+                if temp_regex[h+1] == 'n':
+                    new_infix.append(ord('\n'))
+                    h += 2
+                elif temp_regex[h+1] == 't':
+                    new_infix.append(ord('\t'))
+                    h += 2
+                elif temp_regex[h+1] == 's':
+                    new_infix.append(ord(' '))
+                    h += 2
+                else:
+                    new_infix.append(ord(temp_regex[h+1]))
+                    h += 2
+            else:
+                new_infix.append(ord(temp_regex[h]))
+                h += 1
+                
+            if h < (len(temp_regex)):
+                new_infix.append('|')
+
+        i = j + 1
+
+        return infix_regex, j + 1, new_infix
+    
+
+    def handle_brackets (infix_regex, i, new_infix):
+        temp_regex = []
+        new_infix.append('(')
+        j = i + 1
+
+        while j < len(infix_regex) and infix_regex[j] != ']':
+            temp_regex.append(infix_regex[j])
+            j += 1
+
+        l = 0
+        while l < len(temp_regex):
+            char = temp_regex[l]
+            if char == '-':
+                first = new_infix.pop()
+                second = temp_regex[l+1]
+                if second == '\'':
+                    second = ord(temp_regex[l+2])
+                    l += 1
+                else:
+                    second = ord(second)
+
+                p = first
+                for p in range(first, second + 1):
+                    if p == second:
+                        new_infix.append(p)
+                        break
+                    new_infix.append(p)
+                    new_infix.append('|')
+                    p += 1
+
+                l += 2
+                continue
+
+            elif char == '\'':
+                temp_regex, l, new_infix = handle_comilla(temp_regex, l, new_infix)
+                continue
+
+            elif char == '\\':
+                temp_regex, l, new_infix = handle_slash(temp_regex, l, new_infix)
+                continue
+
+            elif char == '^':
+                temp_regex, l, new_infix = handle_negate(temp_regex, l, new_infix)
+                continue
+
+            elif char == '\"':
+                temp_regex, l, new_infix = handle_double_comilla(temp_regex, l, new_infix)
+                continue
+            else: 
+                new_infix.append(ord(char))
+                l += 1
+        
+        i = j + 1
+        new_infix.append(')')
+        return infix_regex, i, new_infix
+    
+    
+    def handle_negate (infix_regex, i, new_infix):
+        next = infix_regex[i+1]
+        if next == '(':
+            temp = []
+            j = i + 2
+            while j < len(infix_regex) and infix_regex[j] != ')':
+                temp.append(infix_regex[j])
+                j += 1
+            i = j
+
+            new_temp = []
+            a = 0
+            while a < len(temp):
+                t = temp[a]
+                if t == '\\':
+                    if temp[a+1] == 'n':
+                        t = '\n'
+                        a += 1
+                    elif temp[a+1] == 't':
+                        t = '\t'
+                        a += 1
+                    elif temp[a+1] == 's':
+                        t = ' '
+                        a += 1
+                    else:
+                        t = temp[a+1]
+                        a += 1
+                new_temp.append(ord(t))
+                a += 1 
+
+            j = 0
+            for j in range(0, Universo + 1):
+                if j == Universo and j not in new_temp:
+                    new_infix.append(j)
+                    break
+                if j not in new_temp:
+                    new_infix.append(j)
+                    new_infix.append('|')
+                j += 1
+                
+        else:
+            next_ascii = ord(next)
+            j = 0
+            for j in range(0, Universo + 1):
+                if j == Universo and j != next_ascii:
+                    new_infix.append(j)
+                    break
+                if j != next_ascii:
+                    new_infix.append(j)
+                    new_infix.append('|')
+                j += 1
+
+        i += 2
+
+        return infix_regex, i, new_infix
+    
+
     operadores = ['*', '+', '?', '|', '(', ')', '!']
 
     Universo = 255
@@ -52,123 +244,24 @@ def ASCIITransformer(infix_regex):
             continue
 
         elif char == '\\':
-            next = infix_regex[i+1]
-            if next == '\\' or next in operadores or next == '-' or next == '^':
-                new_infix.append(ord(next))
-                i += 2
-                continue
-            elif next == 'n':
-                new_infix.append(ord('\n'))
-                i += 2
-                continue
-            elif next == 't':
-                new_infix.append(ord('\t'))
-                i += 2
-                continue
-            else:
-                new_infix.append(ord(char))
-                i += 1
-                continue
+            infix_regex, i, new_infix = handle_slash(infix_regex, i, new_infix)
+            continue
         
-        elif char == '-':
-            first = new_infix.pop()
-            second = infix_regex[i+1]
-            if second == '\'':
-                second = ord(infix_regex[i+2])
-                i += 1
-            else:
-                second = ord(second)
-
-            j = first
-            for j in range(first, second + 1):
-                if j == second:
-                    new_infix.append(j)
-                    break
-                new_infix.append(j)
-                new_infix.append('|')
-                j += 1
-
-            i += 2
+        elif char == '\'':
+            infix_regex, i, new_infix = handle_comilla(infix_regex, i, new_infix)
             continue
 
-        elif char == '\'':
-            if i + 1 < len(infix_regex):
-                next = infix_regex[i + 1]
-                if next == '\'':
-                    new_infix.append('|')
-                    i += 2
-                elif i + 2 < len(infix_regex):
-                    next_next = infix_regex[i + 2]
-                    if next != '-' and next_next == '\'':
-                        new_infix.append(ord(next))
-                        i += 2
-                        continue
-                    else:
-                        i += 1
-                        continue
-                else:
-                    i += 1
-                    continue
-
-            else:
-                i += 1
-                continue
+        elif char == '[':
+            infix_regex, i, new_infix = handle_brackets(infix_regex, i, new_infix)
+            continue
         
         elif char == '^':
-            next = infix_regex[i+1]
-            if next == '(':
-                temp = []
-                j = i + 2
-                while j < len(infix_regex) and infix_regex[j] != ')':
-                    temp.append(infix_regex[j])
-                    j += 1
-                i = j
-
-                new_temp = []
-                a = 0
-                while a < len(temp):
-                    t = temp[a]
-                    if t == '\\':
-                        if temp[a+1] == 'n' or temp[a+1] == 't':
-                            t = '\n'
-                            a += 1
-                        elif temp[a+1] == 't':
-                            t = '\t'
-                            a += 1
-                        else:
-                            t = temp[a+1]
-                            a += 1
-                    new_temp.append(ord(t))
-                    a += 1 
-
-                j = 0
-                for j in range(0, Universo + 1):
-                    if j == Universo and j not in new_temp:
-                        new_infix.append(j)
-                        break
-                    if j not in new_temp:
-                        new_infix.append(j)
-                        new_infix.append('|')
-                    j += 1
-            else:
-                next_ascii = ord(next)
-                j = 0
-                for j in range(0, Universo + 1):
-                    if j == Universo and j != next_ascii:
-                        new_infix.append(j)
-                        break
-                    if j != next_ascii:
-                        new_infix.append(j)
-                        new_infix.append('|')
-                    j += 1
-
-            i += 2
+            infix_regex, i, new_infix = handle_negate(infix_regex, i, new_infix)
+            continue
             
         else:
             new_infix.append(ord(char))
             i += 1
-
-    print(new_infix)
 
     return new_infix
 
@@ -208,13 +301,13 @@ def main():
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
     Machines = {
-        "Commentarios": "\(\* (' '-'&''\+'-'}''á''é''í''ó''ú''ñ')* \*\)",
-        "Declaration": "let (a-z)* =",
-        "Variables": "([(^])*]|^( \n)*)+",
+        "Commentarios": "\(\* [' '-'&''+'-'}''á''é''í''ó''ú''ñ']* \*\)",
+        "Declaration": "let ['a'-'z']* =",
+        "Variables": "('['(^])*]|^( \n)*)+",
         "Reglas": "rule tokens =",
-        "Tokens1": "('&'-'}')+",
-        "Tokens2": "\| *('&'-'}')*",
-        "Returns": "{ return ('A'-'Z')* }",
+        "Tokens1": "['&'-'}']+",
+        "Tokens2": "\| *['&'-'}']*",
+        "Returns": "{ return ['A'-'Z']* }",
     }
 
     ascii_comments = Machines['Commentarios']
@@ -252,7 +345,7 @@ def main():
     returns_states, returns_transitions, returns_inicial, returns_final = getMachine(ascii_returns)
     print("AFD para returns generado")
 
-    data = readYalexFile('slr-1.yal')
+    data = readYalexFile('slr-2.yal')
 
     i = 0
     diccionario = {}
@@ -318,7 +411,6 @@ def main():
                 print("Tokens2: " + valores)
                 diccionario[contador] = valores
                 listValues = valores.split()
-                tokens.append(listValues[0])
                 tokens.append(listValues[1])
                 temp_tokens.append(listValues[1])
                 contador += 1
@@ -347,32 +439,6 @@ def main():
     for i in diccionario:
         print(i, ": ", diccionario[i])
 
-    # num = 0
-    # while num < len(tokens):
-    #     ton = tokens[num]
-    #     print(ton)
-    #     print('\'' in ton)
-    #     if '\'' in ton:
-    #         ton = ord(ton.replace('\'', ''))
-    #         tokens[num] = ton
-    #     num += 1
-        
-    # for i in tokens_dictionary:
-    #     print(i, ": ", tokens_dictionary[i])
-
-    # for val in values:
-    #     value = values[val]
-
-    #     start = value.find('[')
-    #     end = value.find(']')
-
-    #     ASCIIList = ASCIITransformer(value[start+1:end])
-    #     replacement = ''.join(str(i) for i in ASCIIList)
-
-    #     if start != -1 and end != -1:
-    #         new_string = value[:start] + '(' + replacement + ')' + value[end+1:]
-    #         values[val] = new_string
-
     print("Values: ")
     for val in values:
         print(val, ": ", values[val])
@@ -380,7 +446,7 @@ def main():
 
     for val in values:
         valor = values[val]
-        for valo in values:
+        for valo in reversed(values):
             first = valor.find(valo)
             last = 0
             if first != -1:
@@ -423,6 +489,10 @@ def main():
     print(super_string)
 
     ascii_super = ASCIITransformer(super_string)
+
+    print()
+    print(ascii_super)
+    print()
 
     super_postfix = shun.exec(ascii_super)
     print(super_postfix)

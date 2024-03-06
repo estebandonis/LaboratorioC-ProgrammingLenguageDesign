@@ -192,6 +192,12 @@ def exec(postfix, graph_this = False):
                 if stock.number != None:
                     stock.number += temp_contador_leafs
                     contador_leafs += 1
+                    if stock.primerapos != set():
+                        extraer = stock.primerapos.pop()
+                        stock.primerapos.add(extraer + temp_contador_leafs)
+                    if stock.ultimapos != set():
+                        extraer = stock.ultimapos.pop()
+                        stock.ultimapos.add(extraer + temp_contador_leafs)
                 plustack[i] = stock
 
             copy_node = plustack.pop()
