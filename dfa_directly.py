@@ -118,12 +118,12 @@ def exec(stack_arbol, node_list, alfabeto):
 
     estado_inicial = Destados[0][0]
 
-    pydotplus.find_graphviz()
+    # pydotplus.find_graphviz()
 
-    graph = create_dfa_graph(estados, estado_final, Dtran, estado_inicial)
+    # graph = create_dfa_graph(estados, estado_final, Dtran, estado_inicial)
 
-    # Save or display the graph
-    png_file_path = "pngs/dfa_direct_graph.png"
-    graph.write_png(png_file_path)  # Save PNG file
+    # # Save or display the graph
+    # png_file_path = "pngs/dfa_direct_graph.png"
+    # graph.write_png(png_file_path)  # Save PNG file
 
     return estados, alfabeto, Dtran, estado_inicial, estado_final

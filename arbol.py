@@ -117,18 +117,8 @@ def operando_operation(temp_stack, alfabeto, simbolo, contador_simbolos, contado
     contador_leafs += 1
     return temp_stack, alfabeto, contador_simbolos, contador_leafs
 
-def range_operation(temp_stack, alfabeto, contador_leafs, contador_simbolos, left_node, right_node):
-    range_node = Node('-', contador_simbolos)
-    left_node.padre = range_node.id
-    range_node.left = left_node.id
-    right_node.padre = range_node.id
-    contador_simbolos -= 1
-    i = left_node.value + 1
-    for i in range(left_node.value, right_node.value):
-        operando_operation(temp_stack, alfabeto, i, contador_simbolos, contador_leafs)
 
-
-def exec(postfix):
+def exec(postfix, graph_this = False):
     postfix.append('#')
     postfix.append('.')
     stack = []
@@ -157,8 +147,59 @@ def exec(postfix):
 
         elif simbolo == '+':
             left_node = temp_stack.pop()
-            temp_stack, alfabeto, contador_simbolos, contador_leafs = operando_operation(temp_stack, alfabeto, left_node.value, contador_simbolos, contador_leafs)
-            stack, temp_stack, contador_simbolos = kleene_operation(stack, temp_stack, contador_simbolos, temp_stack.pop())
+
+            list_values = []
+            list_ids_temp = []
+            list_values.append(left_node.value)
+            list_ids_temp.append(left_node.left)
+            list_ids_temp.append(left_node.right)
+            paso = True
+            while paso == True and list_ids_temp != []:
+                paso = False
+                current_id = list_ids_temp.pop()
+                for i in range(len(stack)):
+                    current_node = stack[i]
+                    if current_node.id == current_id:
+                        paso = True
+                        list_values.append(current_node.value)
+                        if current_node.left != None:
+                            list_ids_temp.append(current_node.left)
+                        if current_node.right != None:
+                            list_ids_temp.append(current_node.right)
+                        break
+
+            list_values.reverse()
+            plustack, plusnode_list, plusalfabeto = exec(list_values)
+
+            temp_contador_simbolos = contador_simbolos
+            temp_contador_leafs = contador_leafs - 1
+
+            plustack.pop()
+            plustack.pop()
+            
+            for i in range(len(plustack)):
+                stock = plustack[i]
+                stock.id += temp_contador_simbolos
+                contador_simbolos += 1
+                if stock.padre != None:
+                    stock.padre += temp_contador_simbolos
+                if stock.left != None:
+                    stock.left += temp_contador_simbolos
+                    contador_simbolos += 1
+                if stock.right != None:
+                    stock.right += temp_contador_simbolos
+                    contador_simbolos += 1
+                if stock.number != None:
+                    stock.number += temp_contador_leafs
+                    contador_leafs += 1
+                plustack[i] = stock
+
+            copy_node = plustack.pop()
+
+            for i in range(len(plustack)):
+                stack.append(plustack[i])
+
+            stack, temp_stack, contador_simbolos = kleene_operation(stack, temp_stack, contador_simbolos, copy_node)
             right_node = temp_stack.pop()
             stack, temp_stack, contador_simbolos = concat_operation(stack, temp_stack, contador_simbolos, left_node, right_node)
 
@@ -167,10 +208,6 @@ def exec(postfix):
             temp_stack, alfabeto, contador_simbolos, contador_leafs = operando_operation(temp_stack, alfabeto, '𝜀', contador_simbolos, contador_leafs)
             right_node = temp_stack.pop()
             stack, temp_stack, contador_simbolos = or_operation(stack, temp_stack, contador_simbolos, left_node, right_node)
-
-        elif simbolo == '-':
-            right_node = temp_stack.pop()
-            left_node = temp_stack.pop()
 
         else:
             temp_stack, alfabeto, contador_simbolos, contador_leafs = operando_operation(temp_stack, alfabeto, simbolo, contador_simbolos, contador_leafs)
@@ -244,12 +281,14 @@ def exec(postfix):
         if node.value == '#':
             node_list[node.number] = [node.value, node.siguientepos]
 
-    pydotplus.find_graphviz()
 
-    graph = tree_graph(stack);
+    if (graph_this == True):
+        pydotplus.find_graphviz()
 
-    # Save or display the graph
-    png_file_path = "pngs/tree_graph.png"
-    graph.write_png(png_file_path)  # Save PNG file
+        graph = tree_graph(stack);
+
+        # Save or display the graph
+        png_file_path = "pngs/tree_graph.png"
+        graph.write_png(png_file_path)  # Save PNG file
 
     return stack, node_list, alfabeto

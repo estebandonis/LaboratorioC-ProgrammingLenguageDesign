@@ -23,18 +23,14 @@ def formatear_regex(regex):
     
     res.append(regex[-1])
 
-    print("res: ", res)
-
     return res
 
 def infix_to_postfix(regex):
     stack = []
     postfix = []
     regexp = formatear_regex(regex)
-    print("formatear_regex: ", regexp)
 
     i = 0
-    print("len(regexp): ", len(regexp))
     while i < len(regexp):
         c = regexp[i]
         if c == '(':
@@ -64,8 +60,6 @@ def infix_to_postfix(regex):
 
     while len(stack) > 0:
         postfix.append(stack.pop())
-    
-    print("postfix: ", postfix)
     return postfix
 
 def exec(expression):
