@@ -1,3 +1,5 @@
+import sys
+
 import shuntingyard as shun
 import dfa_directly as dfa_dir
 import dfa_minimization as dfa_min
@@ -341,7 +343,7 @@ def main():
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
     Machines = {
-        "Commentarios": "\(\* [' '-'&''+'-'}''á''é''í''ó''ú''ñ']* \*\)",
+        "Commentarios": "\(\* [' '-'&''+'-'}''á''é''í''ó''ú''ñ''\n''\t']* \*\)",
         "Declaration": "let ['a'-'z']* =",
         "Variables": "('['(^])*]|^( \n)*)+",
         "Reglas": "rule tokens =",
@@ -385,7 +387,7 @@ def main():
     returns_states, returns_transitions, returns_inicial, returns_final = getMachine(ascii_returns)
     print("AFD para returns generado")
 
-    data = readYalexFile('slr-4.yal')
+    data = readYalexFile('slr-1.yal')
 
     i = 0
     diccionario = {}
@@ -430,7 +432,11 @@ def main():
             if bol:
                 print("Variables: " + valores)
                 diccionario[contador] = valores
-                values[variables.pop()] = valores
+                if variables != [] and len(variables) < 2:
+                    values[variables.pop()] = valores
+                else:
+                    print("Error lexico en la linea: ", data[i])
+                    sys.exit()
                 temp_tokens.append(valores)
                 contador += 1
                 i = num
@@ -441,7 +447,11 @@ def main():
             if bol:
                 print("Returns: " + valores)
                 diccionario[contador] = valores
-                tokens_dictionary[temp_tokens.pop()] = valores
+                if temp_tokens != []:
+                    tokens_dictionary[temp_tokens.pop()] = valores
+                else:
+                    print("Error lexico en la linea: ", data[i])
+                    sys.exit()
                 contador += 1
                 i = num
                 continue
@@ -474,7 +484,7 @@ def main():
     
         else:
             print("Error lexico en la linea: ", data[i])
-            break
+            sys.exit()
     
     print("Diccionario")
     for i in diccionario:
@@ -538,8 +548,5 @@ def main():
     super_postfix = shun.exec(ascii_super)
     print(super_postfix)
     stack, node_list, alfabeto = tree.exec(super_postfix, True)
-
-
-    # print("Tokens: ", new_tokens)
 
 main()
