@@ -12,7 +12,7 @@ def readYalexFile(file):
     return data
 
 
-def ASCIITransformer(infix_regex):
+def ASCIITransformer(infix_regex, check_operators = False):
     new_infix = []
 
     # \(\* (' '-'&''\+'-'}''á''é''í''ó''ú''ñ')* \*\)
@@ -357,8 +357,12 @@ def ASCIITransformer(infix_regex):
             continue
             
         else:
-            new_infix.append(ord(char))
-            i += 1
+            if check_operators:
+                print("Error léxico, operador no reconocido: ", char)
+                sys.exit()             
+            else:
+                new_infix.append(ord(char))
+                i += 1
 
     print()
     print(new_infix)
@@ -598,7 +602,7 @@ def main():
     print("Super String: ")
     print(super_string)
 
-    ascii_super = ASCIITransformer(super_string)
+    ascii_super = ASCIITransformer(super_string, True)
 
     print()
     print(ascii_super)
