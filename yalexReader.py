@@ -265,6 +265,57 @@ def ASCIITransformer(infix_regex):
         return infix_regex, i, new_infix
     
 
+    def char_universe (infix_regex, i, new_infix):
+        p = 0
+        for p in range(0, Universo + 1):
+            if p == Universo:
+                new_infix.append(p)
+                break
+            new_infix.append(p)
+            new_infix.append('|')
+            p += 1
+
+        i += 1
+
+        return infix_regex, i, new_infix
+    
+
+    def char_arroba (infix_regex, i, new_infix):
+        i += 1
+
+        first_set = set()
+        new_infix.pop()
+        value_pop = ''
+        while value_pop != '(':
+            value_pop = new_infix.pop()
+            if value_pop != '(' and value_pop != '|' and value_pop != ')':
+                first_set.add(value_pop)
+
+        second_set = []
+        infix_regex, i, second_set = handle_brackets(infix_regex, i, second_set)
+
+        second_set = set(second_set)
+
+        second_set.discard(')')
+        second_set.discard('(')
+        second_set.discard('|')
+
+        new_set = first_set.difference(second_set)
+
+        new_infix.append('(')
+
+        var = 0
+        for varia in new_set:
+            new_infix.append(varia)
+            if var < (len(new_set) - 1):
+                new_infix.append('|')
+            var += 1
+
+        new_infix.append(')')
+
+        return infix_regex, i, new_infix
+    
+
     operadores = ['*', '+', '?', '|', '(', ')', '!']
 
     Universo = 255
@@ -295,6 +346,14 @@ def ASCIITransformer(infix_regex):
 
         elif char == '\"':
             infix_regex, i, new_infix = handle_double_comilla(infix_regex, i, new_infix)
+            continue
+
+        elif char == '_':
+            infix_regex, i, new_infix = char_universe(infix_regex, i, new_infix)
+            continue
+        
+        elif char == '#':
+            infix_regex, i, new_infix = char_arroba(infix_regex, i, new_infix)
             continue
             
         else:
@@ -387,7 +446,7 @@ def main():
     returns_states, returns_transitions, returns_inicial, returns_final = getMachine(ascii_returns)
     print("AFD para returns generado")
 
-    data = readYalexFile('slr-1.yal')
+    data = readYalexFile('slr-4.yal')
 
     i = 0
     diccionario = {}
@@ -435,7 +494,7 @@ def main():
                 if variables != [] and len(variables) < 2:
                     values[variables.pop()] = valores
                 else:
-                    print("Error lexico en la linea: ", data[i])
+                    print("Error léxico, existe un id sin definición")
                     sys.exit()
                 temp_tokens.append(valores)
                 contador += 1
@@ -450,7 +509,7 @@ def main():
                 if temp_tokens != []:
                     tokens_dictionary[temp_tokens.pop()] = valores
                 else:
-                    print("Error lexico en la linea: ", data[i])
+                    print("Error léxico, no existe un token para el siguiente return")
                     sys.exit()
                 contador += 1
                 i = num

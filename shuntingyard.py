@@ -1,12 +1,12 @@
 def getPrecedence(ope):
-    precedencia = {'(': 1, '|': 2, '-': 2, '.': 3, '+': 4, '?': 4, '!': 4, '*': 4} # 40 = '(', 124 = '|', 45 = '-', 46 = '.', 43 = '+', 63 = '?', 42 = '*'
+    precedencia = {'(': 1, '|': 2, '.': 3, '+': 4, '?': 4, '*': 4} # 40 = '(', 124 = '|', 45 = '-', 46 = '.', 43 = '+', 63 = '?', 42 = '*'
     if ope not in precedencia:
         return 5
     return precedencia[ope]
 
 def formatear_regex(regex):
-    all_operators = ['|', '-', '+', '?', '!', '*']
-    binary_operators = ['|', '-']
+    all_operators = ['|', '+', '?', '*']
+    binary_operators = ['|']
     res = []
 
     for i in range(len(regex)):
