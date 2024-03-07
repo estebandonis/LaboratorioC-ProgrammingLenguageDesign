@@ -58,21 +58,17 @@ def ASCIITransformer(infix_regex):
     
 
     def handle_comilla (infix_regex, i, new_infix):
-        if i + 1 < len(infix_regex):
+        if i + 1 < len(infix_regex) and i + 2 < len(infix_regex):
             next = infix_regex[i + 1]
             if next == '\'':
                 new_infix.append('|')
                 i += 1
-            elif i + 2 < len(infix_regex):
-                next_next = infix_regex[i + 2]
-                if next != '-' and next_next == '\'':
-                    new_infix.append(ord(next))
-                    i += 2
-                elif next == '-' and next_next == '\'' and infix_regex[i - 1] == '\'':
-                    new_infix.append(ord(next))
-                    i += 2
-                else:
-                    i += 1
+            elif infix_regex[i + 2] == '\'':
+                new_infix.append(ord(next))
+                i += 3
+                if i < len(infix_regex):
+                    if infix_regex[i] == '\'' or infix_regex[i] == '\"':
+                        new_infix.append('|')
             else:
                 i += 1
 
@@ -81,7 +77,43 @@ def ASCIITransformer(infix_regex):
 
         return infix_regex, i, new_infix
     
+
     def handle_double_comilla (infix_regex, i, new_infix):
+        temp_regex = []
+        j = i + 1
+
+        while j < len(infix_regex) and infix_regex[j] != '\"':
+            temp_regex.append(infix_regex[j])
+            j += 1
+
+        h = 0
+        while h < len(temp_regex):
+            
+            if temp_regex[h] == '\\':
+                if temp_regex[h+1] == 'n':
+                    new_infix.append(ord('\n'))
+                    h += 2
+                elif temp_regex[h+1] == 't':
+                    new_infix.append(ord('\t'))
+                    h += 2
+                elif temp_regex[h+1] == 's':
+                    new_infix.append(ord(' '))
+                    h += 2
+                else:
+                    new_infix.append(ord(temp_regex[h+1]))
+                    h += 2
+            else:
+                new_infix.append(ord(temp_regex[h]))
+                h += 1
+            
+        if infix_regex[j + 1] == '\'' or infix_regex[j + 1] == '\"':
+            new_infix.append('|')
+
+        i = j + 1
+
+        return infix_regex, j + 1, new_infix
+    
+    def handle_double_comilla_brackets (infix_regex, i, new_infix):
         temp_regex = []
         j = i + 1
 
@@ -163,7 +195,7 @@ def ASCIITransformer(infix_regex):
                 continue
 
             elif char == '\"':
-                temp_regex, l, new_infix = handle_double_comilla(temp_regex, l, new_infix)
+                temp_regex, l, new_infix = handle_double_comilla_brackets(temp_regex, l, new_infix)
                 continue
             else: 
                 new_infix.append(ord(char))
@@ -258,10 +290,18 @@ def ASCIITransformer(infix_regex):
         elif char == '^':
             infix_regex, i, new_infix = handle_negate(infix_regex, i, new_infix)
             continue
+
+        elif char == '\"':
+            infix_regex, i, new_infix = handle_double_comilla(infix_regex, i, new_infix)
+            continue
             
         else:
             new_infix.append(ord(char))
             i += 1
+
+    print()
+    print(new_infix)
+    print()
 
     return new_infix
 
@@ -306,7 +346,7 @@ def main():
         "Variables": "('['(^])*]|^( \n)*)+",
         "Reglas": "rule tokens =",
         "Tokens1": "['&'-'}']+",
-        "Tokens2": "\| *['&'-'}']*",
+        "Tokens2": "\| *['\"'-'}']*",
         "Returns": "{ return ['A'-'Z']* }",
     }
 
@@ -345,7 +385,7 @@ def main():
     returns_states, returns_transitions, returns_inicial, returns_final = getMachine(ascii_returns)
     print("AFD para returns generado")
 
-    data = readYalexFile('slr-2.yal')
+    data = readYalexFile('slr-4.yal')
 
     i = 0
     diccionario = {}
@@ -411,6 +451,7 @@ def main():
                 print("Tokens2: " + valores)
                 diccionario[contador] = valores
                 listValues = valores.split()
+                tokens.append(listValues[0])
                 tokens.append(listValues[1])
                 temp_tokens.append(listValues[1])
                 contador += 1
