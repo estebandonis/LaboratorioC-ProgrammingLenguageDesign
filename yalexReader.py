@@ -248,6 +248,27 @@ def ASCIITransformer(infix_regex, check_operators = False):
                     new_infix.append('|')
                 j += 1
                 
+        elif next == '[':
+            Set = []
+            infix_regex, i, Set = handle_brackets(infix_regex, i, Set)
+
+            Set = set(Set)
+
+            Set.discard(')')
+            Set.discard('(')
+            Set.discard('|')
+
+            j = 0
+            for j in range(0, Universo + 1):
+                if j == Universo and j not in Set:
+                    new_infix.append(j)
+                    break
+                if j not in Set:
+                    new_infix.append(j)
+                    new_infix.append('|')
+                j += 1
+            
+
         else:
             next_ascii = ord(next)
             j = 0
@@ -407,7 +428,7 @@ def main():
 
     Machines = {
         "Commentarios": "\(\* [' '-'&''+'-'}''á''é''í''ó''ú''ñ''\n''\t']* \*\)",
-        "Declaration": "let ['a'-'z']* =",
+        "Declaration": "let +['a'-'z']* +=",
         "Variables": "('['(^])*]|^( \n)*)+",
         "Reglas": "rule tokens =",
         "Tokens1": "['&'-'}']+",
