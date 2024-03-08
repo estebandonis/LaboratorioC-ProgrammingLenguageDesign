@@ -28,7 +28,7 @@ def tree_graph(stack):
     num = 0
     for nodo in stack:
         node = pydotplus.Node(num)
-        node.set_label(nodo.value)  # Set the label
+        node.set_label(nodo.value) 
         node.set_fontsize(12)  # Set font size
         node.set_width(0.6)  # Set the desired width
         node.set_height(0.6)  # Set the desired height
