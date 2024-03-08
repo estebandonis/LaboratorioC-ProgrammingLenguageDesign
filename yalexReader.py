@@ -426,6 +426,8 @@ def main():
     operadores = ['*', '+', '?', '|', '(', ')', '!']
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
+    archivo = "slr-2.yal"
+
     Machines = {
         "Commentarios": "\(\* [' '-'&''+'-'}''á''é''í''ó''ú''ñ''\n''\t']* \*\)",
         "Declaration": "let +['a'-'z']* +=",
@@ -471,7 +473,7 @@ def main():
     returns_states, returns_transitions, returns_inicial, returns_final = getMachine(ascii_returns)
     print("AFD para returns generado")
 
-    data = readYalexFile('slr-4.yal')
+    data = readYalexFile(archivo)
 
     i = 0
     diccionario = {}
@@ -499,6 +501,9 @@ def main():
             contador += 1
             read_tokens = True
             i = num
+            if variables != []:
+                print("Error léxico, existe un id sin definición")
+                sys.exit()
             continue
         
         if read_tokens == False:
