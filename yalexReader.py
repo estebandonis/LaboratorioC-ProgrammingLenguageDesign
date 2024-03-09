@@ -15,56 +15,47 @@ def readYalexFile(file):
 def ASCIITransformer(infix_regex, check_operators = False):
     new_infix = []
 
-    # \(\* (' '-'&''\+'-'}''á''é''í''ó''ú''ñ')* \*\)
-
-    # let (a-z)* = ([(' '-'\''^'-'}')*]|(('\('-'Z''\'-'}')*))*
-
-    # let (a-z)* = *([^=]|['[]*|?.]|' ')+"],
-
-    # ([^])*]|((^( \n))*)+
-
-    # Antes: ( +('*'-'}')*)|( +'|' ('*'-'}')* +{ return ('A'-'Z')* })
-
-    #  +('|' )?('('-'}')+( +{ return ('A'-'Z')+ })?
-
-    # ["| ([a-zl'[al')+ +\{ *return *[A-Z]+ *\}."]
-
-    """
-    Machines = {
-        "Commentarios": "\(\* (' '-'&''\+'-'}''á''é''í''ó''ú''ñ')* \*\)",
-        "Declaration": "let (a-z)* =",
-        "Variables": "([(^])*]|^( \n)*)+",
-        "Reglas": "rule tokens =",
-        "Tokens1": "('&'-'}')+ *{ return ('A'-'Z')* }",
-        "Tokens2": "\| ('&'-'}')+ *{ return ('A'-'Z')* }",
-        "Tokens3": "('a'-'z')+",
-    }
-    """
-
     def handle_slash (infix_regex, i, new_infix):
+
         next = infix_regex[i+1]
-        if next == '\\' or next in operadores or next == '-' or next == '^':
-            new_infix.append(ord(next))
-            i += 2
-        elif next == 'n':
+
+        if next == 'n':
             new_infix.append(ord('\n'))
             i += 2
         elif next == 't':
             new_infix.append(ord('\t'))
             i += 2
+        elif next == 's':
+            new_infix.append(ord(' '))
+            i += 2
+        elif next == '\\':
+            new_infix.append(ord('\\'))
+            i += 2
+        elif next == '\"':
+            new_infix.append(ord('\"'))
+            i += 2
+        elif next == '\'':
+            new_infix.append(ord('\''))
+            i += 2
         else:
-            new_infix.append(ord(char))
-            i += 1
+            print("Error léxico, operador no reconocido despues de slash: ", next)
+            sys.exit()
 
         return infix_regex, i, new_infix
     
 
     def handle_comilla (infix_regex, i, new_infix):
-        if i + 1 < len(infix_regex) and i + 2 < len(infix_regex):
+        if i + 2 < len(infix_regex):
             next = infix_regex[i + 1]
-            if next == '\'':
+            if i - 1 >= 0 and infix_regex[i - 1] == '\'' and infix_regex[i] == '\'' and next == '\'':
+                print("Error léxico, no se puede tener dos comillas simples seguidas")
+                sys.exit()
+            elif next == '\'':
                 new_infix.append('|')
                 i += 1
+            elif next == '\\':
+                i += 1
+                infix_regex, i, new_infix = handle_slash(infix_regex, i, new_infix)
             elif infix_regex[i + 2] == '\'':
                 new_infix.append(ord(next))
                 i += 3
@@ -84,31 +75,24 @@ def ASCIITransformer(infix_regex, check_operators = False):
         temp_regex = []
         j = i + 1
 
+        if infix_regex[j] == '\"':
+            print("Error léxico, no se puede tener dos comillas dobles seguidas")
+            sys.exit()
+
         while j < len(infix_regex) and infix_regex[j] != '\"':
             temp_regex.append(infix_regex[j])
             j += 1
 
         h = 0
         while h < len(temp_regex):
-            
             if temp_regex[h] == '\\':
-                if temp_regex[h+1] == 'n':
-                    new_infix.append(ord('\n'))
-                    h += 2
-                elif temp_regex[h+1] == 't':
-                    new_infix.append(ord('\t'))
-                    h += 2
-                elif temp_regex[h+1] == 's':
-                    new_infix.append(ord(' '))
-                    h += 2
-                else:
-                    new_infix.append(ord(temp_regex[h+1]))
-                    h += 2
+                infix_regex, h, new_infix = handle_slash(temp_regex, h, new_infix)
+                continue
             else:
                 new_infix.append(ord(temp_regex[h]))
                 h += 1
             
-        if infix_regex[j + 1] == '\'' or infix_regex[j + 1] == '\"':
+        if j + 1 < len(infix_regex) and (infix_regex[j + 1] == '\'' or infix_regex[j + 1] == '\"'):
             new_infix.append('|')
 
         i = j + 1
@@ -117,6 +101,11 @@ def ASCIITransformer(infix_regex, check_operators = False):
     
     def handle_double_comilla_brackets (infix_regex, i, new_infix):
         temp_regex = []
+
+        if infix_regex[i + 1] == '\"':
+            print("Error léxico, no se puede tener dos comillas seguidas")
+            sys.exit()
+
         j = i + 1
 
         while j < len(infix_regex) and infix_regex[j] != '\"':
@@ -125,20 +114,9 @@ def ASCIITransformer(infix_regex, check_operators = False):
 
         h = 0
         while h < len(temp_regex):
-            
             if temp_regex[h] == '\\':
-                if temp_regex[h+1] == 'n':
-                    new_infix.append(ord('\n'))
-                    h += 2
-                elif temp_regex[h+1] == 't':
-                    new_infix.append(ord('\t'))
-                    h += 2
-                elif temp_regex[h+1] == 's':
-                    new_infix.append(ord(' '))
-                    h += 2
-                else:
-                    new_infix.append(ord(temp_regex[h+1]))
-                    h += 2
+                infix_regex, h, new_infix = handle_slash(temp_regex, h, new_infix)
+                continue
             else:
                 new_infix.append(ord(temp_regex[h]))
                 h += 1
@@ -157,6 +135,9 @@ def ASCIITransformer(infix_regex, check_operators = False):
         j = i + 1
 
         while j < len(infix_regex) and infix_regex[j] != ']':
+            if infix_regex[j] == '[':
+                print("Error léxico, no se puede no se cerro el corchete")
+                sys.exit()
             temp_regex.append(infix_regex[j])
             j += 1
 
@@ -223,18 +204,8 @@ def ASCIITransformer(infix_regex, check_operators = False):
             while a < len(temp):
                 t = temp[a]
                 if t == '\\':
-                    if temp[a+1] == 'n':
-                        t = '\n'
-                        a += 1
-                    elif temp[a+1] == 't':
-                        t = '\t'
-                        a += 1
-                    elif temp[a+1] == 's':
-                        t = ' '
-                        a += 1
-                    else:
-                        t = temp[a+1]
-                        a += 1
+                    temp, a, new_infix = handle_slash(temp, a, new_infix)
+                    continue
                 new_temp.append(ord(t))
                 a += 1 
 
@@ -344,6 +315,7 @@ def ASCIITransformer(infix_regex, check_operators = False):
     i = 0
     while i < len(infix_regex):
         char = infix_regex[i]
+
         if char in operadores:
             new_infix.append(char)
             i += 1
@@ -385,10 +357,6 @@ def ASCIITransformer(infix_regex, check_operators = False):
                 new_infix.append(ord(char))
                 i += 1
 
-    print()
-    print(new_infix)
-    print()
-
     return new_infix
 
 def getMachine(regex):
@@ -426,16 +394,16 @@ def main():
     operadores = ['*', '+', '?', '|', '(', ')', '!']
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-    archivo = "slr-2.yal"
+    archivo = "slr-3.yal"
 
     Machines = {
-        "Commentarios": "\(\* [' '-'&''+'-'}''á''é''í''ó''ú''ñ''\n''\t']* \*\)",
+        "Commentarios": "\"(*\" *[' '-'&''+'-'}''á''é''í''ó''ú''ñ''\n''\t']* *\"*)\"",
         "Declaration": "let +['a'-'z']* +=",
         "Variables": "('['(^])*]|^( \n)*)+",
-        "Reglas": "rule tokens =",
+        "Reglas": "rule *tokens *=",
         "Tokens1": "['&'-'}']+",
-        "Tokens2": "\| *['\"'-'}']*",
-        "Returns": "{ return ['A'-'Z']* }",
+        "Tokens2": "'|' *['\"'-'}']*",
+        "Returns": "{ *return *['A'-'Z']* *}",
     }
 
     ascii_comments = Machines['Commentarios']
@@ -503,6 +471,8 @@ def main():
             i = num
             if variables != []:
                 print("Error léxico, existe un id sin definición")
+                print(variables)
+                print(values)
                 sys.exit()
             continue
         
@@ -525,6 +495,9 @@ def main():
                     values[variables.pop()] = valores
                 else:
                     print("Error léxico, existe un id sin definición")
+                    print("valores: ", valores)
+                    print(variables)
+                    print(values)
                     sys.exit()
                 temp_tokens.append(valores)
                 contador += 1
@@ -574,6 +547,10 @@ def main():
         else:
             print("Error lexico en la linea: ", data[i])
             sys.exit()
+
+    if tokens == []:
+        print("Error léxico, no se encontraron tokens")
+        sys.exit()
     
     print("Diccionario")
     for i in diccionario:
@@ -586,6 +563,11 @@ def main():
 
     for val in values:
         valor = values[val]
+
+        if ' let ' in valor:
+            print("Error léxico, no se cerro el corchete")
+            sys.exit()
+
         for valo in reversed(values):
             first = valor.find(valo)
             last = 0
@@ -593,6 +575,9 @@ def main():
                 last = first + len(valo)
 
             if first != -1:
+                if first - 1 >= 0 and valor[first - 1] == '\'' and last < len(valor) and valor[last] == '\'':
+                    print("entro")
+                    continue
                 new_string = valor[:first] + values[valo] + valor[last:]
                 valor = new_string
                 values[val] = new_string
@@ -603,6 +588,9 @@ def main():
                     last = first + len(valo)
 
                 if first != -1:
+                    if first - 1 >= 0 and valor[first - 1] == '\'' and last < len(valor) and valor[last] == '\'':
+                        print("entro")
+                        continue
                     new_string = valor[:first] + values[valo] + valor[last:]
                     valor = new_string
                     values[val] = new_string
