@@ -394,7 +394,7 @@ def main():
     operadores = ['*', '+', '?', '|', '(', ')', '!']
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
-    archivo = "slr-3.yal"
+    archivo = "slr-1.yal"
 
     Machines = {
         "Commentarios": "\"(*\" *[' '-'&''+'-'}''á''é''í''ó''ú''ñ''\n''\t']* *\"*)\"",
@@ -564,8 +564,8 @@ def main():
     for val in values:
         valor = values[val]
 
-        if ' let ' in valor:
-            print("Error léxico, no se cerro el corchete")
+        if 'let ' in valor:
+            print("Error léxico, no se cerro el corchete ", valor.split()[0])
             sys.exit()
 
         for valo in reversed(values):
@@ -583,6 +583,7 @@ def main():
                 values[val] = new_string
 
             while first != -1:
+
                 first = valor.find(valo)
                 if first != -1:
                     last = first + len(valo)

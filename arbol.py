@@ -28,7 +28,24 @@ def tree_graph(stack):
     num = 0
     for nodo in stack:
         node = pydotplus.Node(num)
-        node.set_label(nodo.value) 
+        if type(nodo.value) == int:
+            if nodo.value == 32:
+                label = 'Space'
+            elif nodo.value == 9:
+                label = 'Tab'
+            elif nodo.value == 10:
+                label = 'Newline'
+            else:
+                if nodo.value > 32 and nodo.value < 123:
+                    label = chr(nodo.value)
+                else:
+                    label = nodo.value
+        else:
+            label = nodo.value
+            
+        node.set_label(label)
+            
+        # node.set_label(nodo.value) 
         node.set_fontsize(12)  # Set font size
         node.set_width(0.6)  # Set the desired width
         node.set_height(0.6)  # Set the desired height
