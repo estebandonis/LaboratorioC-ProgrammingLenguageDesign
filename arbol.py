@@ -35,13 +35,21 @@ def tree_graph(stack):
                 label = 'Tab'
             elif nodo.value == 10:
                 label = 'Newline'
+            elif nodo.value == 44:
+                label = 'Comma'
+            elif nodo.value == 92:
+                label = 'Backslash'
+            elif nodo.value == 39:
+                label = 'Single Quote'
+            elif nodo.value == 34:
+                label = 'Double Quote'
             else:
-                if nodo.value > 32 and nodo.value < 123:
+                if nodo.value > 32 and nodo.value < 127:
                     label = chr(nodo.value)
                 else:
-                    label = nodo.value
+                    label = str(nodo.value)
         else:
-            label = nodo.value
+            label = str(nodo.value)
             
         node.set_label(label)
             
